@@ -1,0 +1,42 @@
+name: Deploy Hugo site to GitHub Pages
+on:
+  push:
+    branches: [ main ]        # Build mỗi lần bạn push vào main
+  workflow_dispatch:          # Cho phép bấm Run workflow thủ công
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true      # cần nếu theme là submodule
+          fetch-depth: 0
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: "0.127.0"
+          extended: true
+      - name: Build Hugo
+        run: hugo --minify
+      - name: Upload artifact (public/)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
